@@ -13,5 +13,6 @@ properties:
   sensor:
     temperature-port: 3344
     humidity-port: 3355
-    temperature-threshold: 35.0
-    humidity-threshold: 50.0
+    thresholds:
+      t1: 35.0
+      h1: 50.0

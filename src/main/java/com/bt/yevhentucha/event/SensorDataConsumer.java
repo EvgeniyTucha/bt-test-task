@@ -2,6 +2,7 @@ package com.bt.yevhentucha.event;
 
 import com.bt.yevhentucha.configuration.SensorConfig;
 import com.bt.yevhentucha.domain.SensorData;
+import com.bt.yevhentucha.exception.UnsupportedSensorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -24,7 +25,7 @@ public class SensorDataConsumer {
 
         SensorData sensorData = parseSensorData(message);
         if (sensorData != null && isThresholdExceeded(sensorData)) {
-            logger.warn("ALARM! {} exceeded threshold: {}", sensorData.sensorId(), sensorData.value());
+            logger.warn("ALARM! [{}] exceeded threshold: {}", sensorData.sensorId(), sensorData.value());
         }
     }
 
@@ -41,11 +42,10 @@ public class SensorDataConsumer {
     }
 
     private boolean isThresholdExceeded(SensorData data) {
-        return ("t1".equals(data.sensorId()) && thresholdReached(data, sensorConfig.temperatureThreshold()))
-                || ("h1".equals(data.sensorId()) && thresholdReached(data, sensorConfig.humidityThreshold()));
-    }
-
-    private boolean thresholdReached(SensorData data, double threshold) {
+        double threshold = sensorConfig.thresholds().computeIfAbsent(data.sensorId(), k -> {
+                    throw new UnsupportedSensorException("Unsupported configuration for sensor with id: " + k);
+                }
+        );
         return data.value() >= threshold;
     }
 }
