@@ -5,11 +5,9 @@ import ch.qos.logback.classic.LoggerContext;
 import com.bt.yevhentucha.event.SensorDataConsumer;
 import com.bt.yevhentucha.exception.UnsupportedSensorException;
 import com.bt.yevhentucha.utils.InMemoryAppender;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.runner.RunWith;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,34 +18,44 @@ import java.util.List;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-class SensorDataConsumerTest {
+public class SensorDataConsumerTest {
 
     @Autowired
     private SensorDataConsumer sensorDataConsumer;
 
     private InMemoryAppender appender;
 
-    @BeforeEach
+    @Before
     public void setUp() {
+        assertNotNull(sensorDataConsumer, "SensorDataConsumer should not be null");
         appender = new InMemoryAppender();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         Logger logger = loggerContext.getLogger(SensorDataConsumer.class);
         logger.addAppender(appender);
     }
 
-    @CsvSource({
-            "sensor_id=t1; value=36.5, ALARM! [t1] exceeded threshold: 36.5",
-            "sensor_id=h1; value=52.3, ALARM! [h1] exceeded threshold: 52.3"
-    })
-    @ParameterizedTest
-    public void testReceiveMessage_ThresholdExceeded(String message, String expectedLog) {
+    @Test
+    public void testReceiveMessage_t1_ThresholdExceeded() {
+        String message = "sensor_id=t1; value=36.5";
+
         sensorDataConsumer.receiveMessage(message);
 
         List<String> logs = appender.getLog();
-        assertTrue(logs.stream().anyMatch(log -> log.contains(expectedLog)));
+        assertTrue(logs.stream().anyMatch(log -> log.contains("ALARM! [t1] exceeded threshold: 36.5")));
+    }
+
+    @Test
+    public void testReceiveMessage_h1_ThresholdExceeded() {
+        String message = "sensor_id=h1; value=52.3";
+
+        sensorDataConsumer.receiveMessage(message);
+
+        List<String> logs = appender.getLog();
+        assertTrue(logs.stream().anyMatch(log -> log.contains("ALARM! [h1] exceeded threshold: 52.3")));
     }
 
     @Test
@@ -76,7 +84,7 @@ class SensorDataConsumerTest {
         assertTrue(logs.stream().anyMatch(log -> log.contains("Error parsing sensor data")));
     }
 
-    @AfterEach
+    @After
     public void tearDown() {
         // Clean up the appender after the test
         appender.clear();
