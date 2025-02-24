@@ -1,0 +1,17 @@
+server:
+  port: 8081
+
+spring:
+  rabbitmq:
+    username: ${rabbitmq.username}
+    password: ${rabbitmq.password}
+
+rabbitmq:
+  queue: sensor.queue
+
+properties:
+  sensor:
+    temperature-port: 3344
+    humidity-port: 3355
+    temperature-threshold: 35.0
+    humidity-threshold: 50.0
